@@ -1,3 +1,10 @@
+import PromptSync from "prompt-sync"
+import fs from 'fs/promises'
+
+
+
+
+
 function showMenu() {
     console.log("1. Show laundry services")
     console.log("2. View customer orders")
