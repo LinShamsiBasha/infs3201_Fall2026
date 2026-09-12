@@ -1,9 +1,6 @@
 import PromptSync from "prompt-sync"
 import fs from 'fs/promises'
-
-
-
-
+const prompt = PromptSync()
 
 function showMenu() {
     console.log("1. Show laundry services")
@@ -13,4 +10,18 @@ function showMenu() {
     console.log("5. Exit")
 }
 
-showMenu()
+
+let choice = ''
+while (choice != "5") {
+
+    showMenu()
+    choice = prompt("What is your choice?")
+   
+    
+
+}
+
+
+
+
+
