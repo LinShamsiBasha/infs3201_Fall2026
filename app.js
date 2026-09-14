@@ -64,7 +64,7 @@ while (choice !== "5") {
         await showServices()
     }
     else if (choice === "2") {
-        console.log("View customer orders")
+        await viewCustomerOrders()
     }
     else if (choice === "3") {
         console.log("Update order status")
@@ -85,3 +85,84 @@ while (choice !== "5") {
 
 
 
+async function viewCustomerOrders() {
+
+    try {
+        
+        let customerData = await fs.readFile("customers.json", "utf-8")
+        let orderData = await fs.readFile("orders.json", "utf-8")
+        let serviceData = await fs.readFile("services.json", "utf-8")
+
+        
+        let customers = JSON.parse(customerData)
+        let orders = JSON.parse(orderData)
+        let services = JSON.parse(serviceData)
+
+        let customerId = prompt("Enter customer ID: ")
+
+        
+        let customer = null
+
+        for (let c of customers) {
+            if (c.customerId === customerId) {
+                customer = c
+            }
+        }
+
+        
+        if (customer === null) {
+            console.log("Customer does not exist.")
+            return
+        }
+
+        console.log()
+        console.log("Orders for " + customer.name)
+        console.log()
+
+        console.log("Order ID     Order Date     Status          Total")
+        console.log("--------     ----------     --------        -------")
+
+        let orderFound = false
+
+        
+        for (let order of orders) {
+
+            if (order.customerId === customerId) {
+
+                orderFound = true
+
+                let total = 0
+
+              
+                for (let item of order.items) {
+
+                    
+                    for (let service of services) {
+
+                        if (item.serviceId === service.serviceId) {
+
+                            total = total + (item.quantity * service.price)
+
+                        }
+                    }
+                }
+
+                console.log(
+                    order.orderId + "         " +
+                    order.orderDate + "     " +
+                    order.status + "        " +
+                    total.toFixed(2)
+                )
+            }
+        }
+
+        if (orderFound === false) {
+            console.log("This customer has no orders.")
+        }
+
+        console.log()
+
+    } catch (error) {
+        console.log("Error reading customer orders.")
+    }
+}
