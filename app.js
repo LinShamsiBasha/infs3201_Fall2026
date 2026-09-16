@@ -2,6 +2,12 @@ import PromptSync from "prompt-sync"
 import fs from 'fs/promises'
 const prompt = PromptSync()
 
+
+
+
+/**
+ * Displays the main menu options to the user.
+ */
 function showMenu() {
     console.log("1. Show laundry services")
     console.log("2. View customer orders")
@@ -12,7 +18,10 @@ function showMenu() {
 
 
 
-
+/**
+ * Reads the laundry services from the services JSON file
+ * and displays all available services.
+ */
 async function showServices() {
     try {
         let data = await fs.readFile("services.json", "utf-8")
@@ -84,7 +93,10 @@ while (choice !== "5") {
 
 
 
-
+/**
+ * Asks the user for a customer ID and displays all orders
+ * belonging to that customer.
+ */
 async function viewCustomerOrders() {
 
     try {
@@ -167,17 +179,22 @@ async function viewCustomerOrders() {
     }
 }
 
+
+
+/**
+ * Asks the user for an order ID and updates the order status
+ * if the new status is valid and allowed.
+ */
 async function updateOrderStatus() {
 
     try {
-        // Read orders.json
+        
         let data = await fs.readFile("orders.json", "utf-8")
         let orders = JSON.parse(data)
 
-        // Ask for order ID
+        
         let orderId = prompt("Enter order ID: ")
 
-        // Find the order
         let order = null
 
         for (let o of orders) {
@@ -186,25 +203,22 @@ async function updateOrderStatus() {
             }
         }
 
-        // Check if order exists
+        
         if (order === null) {
             console.log("Order does not exist.")
             return
         }
 
-        // Display current status
+        
         console.log("Current status: " + order.status)
 
-        // Ask for new status
         let newStatus = prompt("Enter new status: ")
 
-        // The statuses in the correct order
         let statuses = ["Received", "Washing", "Ready", "Delivered"]
 
         let currentPosition = -1
         let newPosition = -1
 
-        // Find the position of the current status
         for (let i = 0; i < statuses.length; i++) {
 
             if (statuses[i] === order.status) {
@@ -216,25 +230,20 @@ async function updateOrderStatus() {
             }
         }
 
-        // Check if new status is valid
         if (newPosition === -1) {
             console.log("New status not accepted")
             return
         }
 
-        // Check if user is trying to move backwards
         if (newPosition <= currentPosition) {
             console.log("New status not accepted")
             return
         }
 
-        // Update the status
         order.status = newStatus
 
-        // Convert the array back into JSON text
         let updatedData = JSON.stringify(orders, null, 4)
 
-        // Save it back into orders.json
         await fs.writeFile("orders.json", updatedData)
 
         console.log("Order status updated")
@@ -244,10 +253,14 @@ async function updateOrderStatus() {
     }
 }
 
+
+/**
+ * Creates a new laundry order for an existing customer
+ * and saves the new order to the orders JSON file.
+ */
 async function createNewOrder() {
 
     try {
-        // Read all files that we need
         let customerData = await fs.readFile("customers.json", "utf-8")
         let orderData = await fs.readFile("orders.json", "utf-8")
         let serviceData = await fs.readFile("services.json", "utf-8")
@@ -256,10 +269,8 @@ async function createNewOrder() {
         let orders = JSON.parse(orderData)
         let services = JSON.parse(serviceData)
 
-        // 1. Ask for customer ID
         let customerId = prompt("Enter customer ID: ")
 
-        // Check if customer exists
         let customerExists = false
 
         for (let customer of customers) {
@@ -273,7 +284,6 @@ async function createNewOrder() {
             return
         }
 
-        // 2. Generate the next order ID
         let nextNumber = orders.length + 1
         let orderId = ""
 
@@ -287,14 +297,13 @@ async function createNewOrder() {
             orderId = "O" + nextNumber
         }
 
-        // 3. Get today's date
+       
         let today = new Date()
         let orderDate = today.toISOString().split("T")[0]
 
-        // New orders start as Received
         let status = "Received"
 
-        // 4. Add services
+
         let items = []
         let total = 0
 
@@ -304,12 +313,10 @@ async function createNewOrder() {
                 "Enter service ID (blank to finish): "
             )
 
-            // Blank means the user is finished
             if (serviceId === "") {
                 break
             }
 
-            // Find the service
             let selectedService = null
 
             for (let service of services) {
@@ -318,7 +325,6 @@ async function createNewOrder() {
                 }
             }
 
-            // 5. Check service ID
             if (selectedService === null) {
                 console.log("Service does not exist.")
                 continue
@@ -331,23 +337,21 @@ async function createNewOrder() {
                 continue
             }
 
-            // Add item to the order
+
             items.push({
                 serviceId: serviceId,
                 quantity: quantity
             })
 
-            // 6. Calculate total
             total = total + (quantity * selectedService.price)
         }
 
-        // Must have at least one service
+
         if (items.length === 0) {
             console.log("Order must contain at least one service.")
             return
         }
 
-        // Create the new order
         let newOrder = {
             orderId: orderId,
             customerId: customerId,
@@ -356,10 +360,8 @@ async function createNewOrder() {
             items: items
         }
 
-        // Add it to the orders array
         orders.push(newOrder)
 
-        // 7. Save to orders.json
         let updatedData = JSON.stringify(orders, null, 4)
 
         await fs.writeFile("orders.json", updatedData)
