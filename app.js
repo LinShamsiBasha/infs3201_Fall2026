@@ -70,7 +70,7 @@ while (choice !== "5") {
         await updateOrderStatus()
     }
     else if (choice === "4") {
-        console.log("Create new order")
+        await createNewOrder()
     }
     else if (choice === "5") {
         console.log("Goodbye!")
@@ -241,5 +241,134 @@ async function updateOrderStatus() {
 
     } catch (error) {
         console.log("Error updating order status.")
+    }
+}
+
+async function createNewOrder() {
+
+    try {
+        // Read all files that we need
+        let customerData = await fs.readFile("customers.json", "utf-8")
+        let orderData = await fs.readFile("orders.json", "utf-8")
+        let serviceData = await fs.readFile("services.json", "utf-8")
+
+        let customers = JSON.parse(customerData)
+        let orders = JSON.parse(orderData)
+        let services = JSON.parse(serviceData)
+
+        // 1. Ask for customer ID
+        let customerId = prompt("Enter customer ID: ")
+
+        // Check if customer exists
+        let customerExists = false
+
+        for (let customer of customers) {
+            if (customer.customerId === customerId) {
+                customerExists = true
+            }
+        }
+
+        if (customerExists === false) {
+            console.log("Customer does not exist.")
+            return
+        }
+
+        // 2. Generate the next order ID
+        let nextNumber = orders.length + 1
+        let orderId = ""
+
+        if (nextNumber < 10) {
+            orderId = "O00" + nextNumber
+        }
+        else if (nextNumber < 100) {
+            orderId = "O0" + nextNumber
+        }
+        else {
+            orderId = "O" + nextNumber
+        }
+
+        // 3. Get today's date
+        let today = new Date()
+        let orderDate = today.toISOString().split("T")[0]
+
+        // New orders start as Received
+        let status = "Received"
+
+        // 4. Add services
+        let items = []
+        let total = 0
+
+        while (true) {
+
+            let serviceId = prompt(
+                "Enter service ID (blank to finish): "
+            )
+
+            // Blank means the user is finished
+            if (serviceId === "") {
+                break
+            }
+
+            // Find the service
+            let selectedService = null
+
+            for (let service of services) {
+                if (service.serviceId === serviceId) {
+                    selectedService = service
+                }
+            }
+
+            // 5. Check service ID
+            if (selectedService === null) {
+                console.log("Service does not exist.")
+                continue
+            }
+
+            let quantity = Number(prompt("Enter quantity: "))
+
+            if (quantity <= 0 || isNaN(quantity)) {
+                console.log("Invalid quantity.")
+                continue
+            }
+
+            // Add item to the order
+            items.push({
+                serviceId: serviceId,
+                quantity: quantity
+            })
+
+            // 6. Calculate total
+            total = total + (quantity * selectedService.price)
+        }
+
+        // Must have at least one service
+        if (items.length === 0) {
+            console.log("Order must contain at least one service.")
+            return
+        }
+
+        // Create the new order
+        let newOrder = {
+            orderId: orderId,
+            customerId: customerId,
+            orderDate: orderDate,
+            status: status,
+            items: items
+        }
+
+        // Add it to the orders array
+        orders.push(newOrder)
+
+        // 7. Save to orders.json
+        let updatedData = JSON.stringify(orders, null, 4)
+
+        await fs.writeFile("orders.json", updatedData)
+
+        console.log()
+        console.log("Order " + orderId + " created")
+        console.log("Total price: " + total.toFixed(2) + " QAR")
+
+    } catch (error) {
+        console.log("Error creating order.")
     }
 }
