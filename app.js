@@ -2,9 +2,6 @@ import PromptSync from "prompt-sync"
 import fs from 'fs/promises'
 const prompt = PromptSync()
 
-
-
-
 /**
  * Displays the main menu options to the user.
  */
@@ -58,39 +55,6 @@ async function showServices() {
         console.log("Error reading services.")
     }
 }
-
-
-
-let choice = ""
-
-while (choice !== "5") {
-
-    showMenu()
-
-    choice = prompt("What is your choice> ")
-
-    if (choice === "1") {
-        await showServices()
-    }
-    else if (choice === "2") {
-        await viewCustomerOrders()
-    }
-    else if (choice === "3") {
-        await updateOrderStatus()
-    }
-    else if (choice === "4") {
-        await createNewOrder()
-    }
-    else if (choice === "5") {
-        console.log("Goodbye!")
-    }
-    else {
-        console.log("Invalid choice. Please enter a number from 1 to 5.")
-    }
-
-}
-
-
 
 
 /**
@@ -373,4 +337,33 @@ async function createNewOrder() {
     } catch (error) {
         console.log("Error creating order.")
     }
+}
+
+let choice = ""
+
+while (choice !== "5") {
+
+    showMenu()
+
+    choice = prompt("What is your choice> ")
+
+    if (choice === "1") {
+        await showServices()
+    }
+    else if (choice === "2") {
+        await viewCustomerOrders()
+    }
+    else if (choice === "3") {
+        await updateOrderStatus()
+    }
+    else if (choice === "4") {
+        await createNewOrder()
+    }
+    else if (choice === "5") {
+        console.log("Goodbye!")
+    }
+    else {
+        console.log("Invalid choice. Please enter a number from 1 to 5.")
+    }
+
 }
