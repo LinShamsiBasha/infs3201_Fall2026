@@ -67,7 +67,7 @@ while (choice !== "5") {
         await viewCustomerOrders()
     }
     else if (choice === "3") {
-        console.log("Update order status")
+        await updateOrderStatus()
     }
     else if (choice === "4") {
         console.log("Create new order")
@@ -164,5 +164,82 @@ async function viewCustomerOrders() {
 
     } catch (error) {
         console.log("Error reading customer orders.")
+    }
+}
+
+async function updateOrderStatus() {
+
+    try {
+        // Read orders.json
+        let data = await fs.readFile("orders.json", "utf-8")
+        let orders = JSON.parse(data)
+
+        // Ask for order ID
+        let orderId = prompt("Enter order ID: ")
+
+        // Find the order
+        let order = null
+
+        for (let o of orders) {
+            if (o.orderId === orderId) {
+                order = o
+            }
+        }
+
+        // Check if order exists
+        if (order === null) {
+            console.log("Order does not exist.")
+            return
+        }
+
+        // Display current status
+        console.log("Current status: " + order.status)
+
+        // Ask for new status
+        let newStatus = prompt("Enter new status: ")
+
+        // The statuses in the correct order
+        let statuses = ["Received", "Washing", "Ready", "Delivered"]
+
+        let currentPosition = -1
+        let newPosition = -1
+
+        // Find the position of the current status
+        for (let i = 0; i < statuses.length; i++) {
+
+            if (statuses[i] === order.status) {
+                currentPosition = i
+            }
+
+            if (statuses[i] === newStatus) {
+                newPosition = i
+            }
+        }
+
+        // Check if new status is valid
+        if (newPosition === -1) {
+            console.log("New status not accepted")
+            return
+        }
+
+        // Check if user is trying to move backwards
+        if (newPosition <= currentPosition) {
+            console.log("New status not accepted")
+            return
+        }
+
+        // Update the status
+        order.status = newStatus
+
+        // Convert the array back into JSON text
+        let updatedData = JSON.stringify(orders, null, 4)
+
+        // Save it back into orders.json
+        await fs.writeFile("orders.json", updatedData)
+
+        console.log("Order status updated")
+
+    } catch (error) {
+        console.log("Error updating order status.")
     }
 }
