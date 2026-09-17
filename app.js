@@ -40,13 +40,13 @@ async function showServices() {
         )
 
         for (let service of services) {
-            console.log (
-                order.orderId.padEnd(14) +
-                order.orderDate.padEnd(16) +
-                order.status.padEnd(18) +
-                total.toFixed(2)
-            )
-}
+            console.log(
+            service.serviceId.padEnd(12) +
+            service.name.padEnd(30) +
+            service.unit.padEnd(12) +
+            service.price.toFixed(2)
+        )
+    }
 
         console.log()
 
