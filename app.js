@@ -283,14 +283,6 @@ async function createNewOrder() {
              orderId = "O" + nextNumber
         }        
 
-
-
-
-
-
-
-
-       
         let today = new Date()
         let orderDate = today.toISOString().split("T")[0]
 
