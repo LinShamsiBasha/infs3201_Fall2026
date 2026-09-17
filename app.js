@@ -14,7 +14,6 @@ function showMenu() {
 }
 
 
-
 /**
  * Reads the laundry services from the services JSON file
  * and displays all available services.
