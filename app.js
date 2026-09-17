@@ -41,13 +41,13 @@ async function showServices() {
         )
 
         for (let service of services) {
-            console.log(
-            order.orderId.padEnd(14) +
-            order.orderDate.padEnd(16) +
-            order.status.padEnd(18) +
-            total.toFixed(2)
-        )
-        }
+            console.log (
+                order.orderId.padEnd(14) +
+                order.orderDate.padEnd(16) +
+                order.status.padEnd(18) +
+                total.toFixed(2)
+            )
+}
 
         console.log()
 
@@ -259,7 +259,18 @@ async function createNewOrder() {
             return
         }
 
-        let nextNumber = orders.length + 1
+        let highestNumber = 0
+
+        for (let order of orders) {
+
+            let number = Number(order.orderId.substring(1))
+
+                if (number > highestNumber) {
+                    highestNumber = number
+                }
+            }
+
+        let nextNumber = highestNumber + 1
         let orderId = ""
 
         if (nextNumber < 10) {
@@ -269,8 +280,15 @@ async function createNewOrder() {
             orderId = "O0" + nextNumber
         }
         else {
-            orderId = "O" + nextNumber
-        }
+             orderId = "O" + nextNumber
+        }        
+
+
+
+
+
+
+
 
        
         let today = new Date()
