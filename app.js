@@ -42,11 +42,11 @@ async function showServices() {
 
         for (let service of services) {
             console.log(
-                service.serviceId.padEnd(12) +
-                service.name.padEnd(30) +
-                service.unit.padEnd(12) +
-                service.price.toFixed(2)
-            )
+            order.orderId.padEnd(14) +
+            order.orderDate.padEnd(16) +
+            order.status.padEnd(18) +
+            total.toFixed(2)
+        )
         }
 
         console.log()
@@ -95,8 +95,19 @@ async function viewCustomerOrders() {
         console.log("Orders for " + customer.name)
         console.log()
 
-        console.log("Order ID     Order Date     Status          Total")
-        console.log("--------     ----------     --------        -------")
+        console.log(
+            "Order ID".padEnd(14) +
+            "Order Date".padEnd(16) +
+            "Status".padEnd(18) +
+            "Total"
+        )
+
+        console.log(
+            "--------".padEnd(14) +
+            "----------".padEnd(16) +
+            "--------".padEnd(18) +
+            "-------"
+        )
 
         let orderFound = false
 
@@ -124,9 +135,9 @@ async function viewCustomerOrders() {
                 }
 
                 console.log(
-                    order.orderId + "         " +
-                    order.orderDate + "     " +
-                    order.status + "        " +
+                    order.orderId.padEnd(14) +
+                    order.orderDate.padEnd(16) +
+                    order.status.padEnd(18) +
                     total.toFixed(2)
                 )
             }
