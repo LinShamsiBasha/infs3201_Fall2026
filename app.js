@@ -323,10 +323,12 @@ async function createNewOrder() {
             }
 
 
-            items.push({
+            items.push(
+                {
                 serviceId: serviceId,
                 quantity: quantity
-            })
+                }
+            )
 
             total = total + (quantity * selectedService.price)
         }
