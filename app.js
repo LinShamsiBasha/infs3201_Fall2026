@@ -1,76 +1,52 @@
-import PromptSync from "prompt-sync"
+import promptSync from 'prompt-sync'
 import fs from 'fs/promises'
-const prompt = PromptSync()
+const prompt = promptSync()
 
 /**
- * Displays the main menu options to the user.
+ * Get all services
+ * @returns A list of Objects
  */
-function showMenu() {
-    console.log("1. Show laundry services")
-    console.log("2. View customer orders")
-    console.log("3. Update order status")
-    console.log("4. Create new order")
-    console.log("5. Exit")
+async function getServices() {
+    let raw = await fs.readFile('services.json')
+    let services = JSON.parse(raw)
+    return services
 }
 
 /**
- * Formats a single service into a padded column string for display.
- *
- * @param {Object} service The service object to format.
- * @returns {String} The formatted line representing the service.
+ * Get all orders
+ * @returns A list of JavaScript objects
  */
-function formatServiceLine(service) {
-    return service.serviceId.padEnd(12) +
-        service.name.padEnd(30) +
-        service.unit.padEnd(12) +
-        service.price.toFixed(2)
+async function getOrders() {
+    let raw = await fs.readFile('orders.json')
+    let orders = JSON.parse(raw)
+    return orders
 }
 
 /**
- * Reads the laundry services from the services JSON file
- * and displays all available services.
+ * Display the laundry services in a nicely formatted table.
  */
-async function showServices() {
-    try {
-        let data = await fs.readFile("services.json", "utf-8")
-        let services = JSON.parse(data)
+async function showLaundryServices() {
+    let services = await getServices()
 
-        console.log()
-        console.log(
-            "Service ID".padEnd(12) +
-            "Service".padEnd(30) +
-            "Unit".padEnd(12) +
-            "Price"
-        )
-
-        console.log(
-            "----------".padEnd(12) +
-            "----------------------------".padEnd(30) +
-            "--------".padEnd(12) +
-            "-------"
-        )
-
-        for (let service of services) {
-            console.log(formatServiceLine(service))
-        }
-
-        console.log()
-
-    } catch (error) {
-        console.log("Error reading services.")
+    console.log('\n')
+    console.log('Service ID Service                    Unit    Price')
+    console.log('---------- -------------------------- ------- ------')
+    for (let s of services) {
+        console.log(`${s.serviceId.padEnd(10)} ${s.name.padEnd(26)} ${s.unit.padEnd(5)} ${s.price.toFixed(2).padStart(8)}`)
     }
+    console.log('\n')
 }
 
 /**
- * Searches a list of customers for one matching the given customer ID.
- *
- * @param {Array} customers The list of customer objects to search.
- * @param {String} customerId The customer ID to search for.
- * @returns {Object|null} The matching customer, or null if not found.
+ * Get information about a single customer
+ * @param {*} cid The customer ID
+ * @returns A JavaScript object representing the customer or null if the customer does not exist
  */
-function findCustomerById(customers, customerId) {
-    for (let c of customers) {
-        if (c.customerId === customerId) {
+async function getCustomerInformation(cid) {
+    let raw = await fs.readFile('customers.json')
+    let customerList = JSON.parse(raw)
+    for (let c of customerList) {
+        if (c.customerId === cid) {
             return c
         }
     }
@@ -78,380 +54,273 @@ function findCustomerById(customers, customerId) {
 }
 
 /**
- * Searches a list of services for one matching the given service ID.
- *
- * @param {Array} services The list of service objects to search.
- * @param {String} serviceId The service ID to search for.
- * @returns {Object|null} The matching service, or null if not found.
+ * Get details about a single service
+ * @param {*} sid Service ID
+ * @returns A JavaScript object about the service or null is the service does not exist.
  */
-function findServiceById(services, serviceId) {
-    for (let service of services) {
-        if (service.serviceId === serviceId) {
-            return service
+async function getService(sid) {
+    let raw = await fs.readFile('services.json')
+    let serviceList = JSON.parse(raw) 
+    for (let s of serviceList) {
+        if (s.serviceId == sid) {
+            return s
         }
     }
     return null
 }
 
 /**
- * Calculates the total price of an order based on its items and the
- * current service prices.
- *
- * @param {Object} order The order whose total should be calculated.
- * @param {Array} services The list of available services and prices.
- * @returns {Number} The total price of the order.
+ * Get the price of an individual service item given the service ID
+ * @param {*} sid The id of the service
+ * @returns The price as a Number or null if the service is not found
  */
-function calculateOrderTotal(order, services) {
-    let total = 0
-
-    for (let item of order.items) {
-        let service = findServiceById(services, item.serviceId)
-
-        if (service !== null) {
-            total = total + (item.quantity * service.price)
+async function getServicePrice(sid) {
+    let raw = await fs.readFile('services.json')
+    let serviceList = JSON.parse(raw) 
+    for (let s of serviceList) {
+        if (s.serviceId == sid) {
+            return s.price
         }
     }
-
-    return total
+    return null
 }
 
 /**
- * Formats a single order into a padded column string for display.
- *
- * @param {Object} order The order to format.
- * @param {Number} total The pre-calculated total price of the order.
- * @returns {String} The formatted line representing the order.
+ * Get the orders for a given customer.
+ * @param {*} cid The customer ID
+ * @returns A list of Objects representing the orders for a customer or an empty list if there are none 
+ * or the customer could not be found.
  */
-function formatOrderLine(order, total) {
-    return order.orderId.padEnd(14) +
-        order.orderDate.padEnd(16) +
-        order.status.padEnd(18) +
-        total.toFixed(2)
-}
-
-/**
- * Asks the user for a customer ID and displays all orders
- * belonging to that customer.
- */
-async function viewCustomerOrders() {
-
-    try {
-        let customerData = await fs.readFile("customers.json", "utf-8")
-        let orderData = await fs.readFile("orders.json", "utf-8")
-        let serviceData = await fs.readFile("services.json", "utf-8")
-
-        let customers = JSON.parse(customerData)
-        let orders = JSON.parse(orderData)
-        let services = JSON.parse(serviceData)
-
-        let customerId = prompt("Enter customer ID: ")
-
-        let customer = findCustomerById(customers, customerId)
-
-        if (customer === null) {
-            console.log("Customer does not exist.")
-            return
-        }
-
-        console.log()
-        console.log("Orders for " + customer.name)
-        console.log()
-
-        console.log(
-            "Order ID".padEnd(14) +
-            "Order Date".padEnd(16) +
-            "Status".padEnd(18) +
-            "Total"
-        )
-
-        console.log(
-            "--------".padEnd(14) +
-            "----------".padEnd(16) +
-            "--------".padEnd(18) +
-            "-------"
-        )
-
-        let orderFound = false
-
-        for (let order of orders) {
-
-            if (order.customerId === customerId) {
-                orderFound = true
-                let total = calculateOrderTotal(order, services)
-                console.log(formatOrderLine(order, total))
+async function getCustomerOrders(cid) {
+    let result = []
+    let raw = await fs.readFile('orders.json') 
+    let orderList = JSON.parse(raw)
+    for (let ord of orderList) {
+        if (ord.customerId === cid) {
+            let total = 0
+            for (let items of ord.items) {
+                let price = await getServicePrice(items.serviceId)
+                total += price*items.quantity
             }
+            result.push({
+                order: ord.orderId,
+                date: ord.orderDate,
+                status: ord.status,
+                total: total
+            })
         }
-
-        if (orderFound === false) {
-            console.log("This customer has no orders.")
-        }
-
-        console.log()
-
-    } catch (error) {
-        console.log("Error reading customer orders.")
     }
+    return result
 }
 
 /**
- * Searches a list of orders for one matching the given order ID.
- *
- * @param {Array} orders The list of order objects to search.
- * @param {String} orderId The order ID to search for.
- * @returns {Object|null} The matching order, or null if not found.
+ * Write the list of objects representing the orders out to the file, overwriting the existing file.
+ * @param {*} orderList The list of objects to be written.
  */
-function findOrderById(orders, orderId) {
-    for (let o of orders) {
-        if (o.orderId === orderId) {
-            return o
+async function saveOrders(orderList) {
+    let raw = JSON.stringify(orderList, null, 4)
+    await fs.writeFile('orders.json', raw)
+}
+
+/**
+ * Get details about a single order given the order ID
+ * @param {*} oid The order ID to be found
+ * @returns A JavaScript object for the order or null if the order was not found.
+ */
+async function getOrderDetails(oid) {
+    let raw = await fs.readFile('orders.json')
+    let orderList = JSON.parse(raw)
+    for (let ord of orderList) {
+        if (ord.orderId === oid) {
+            return ord
         }
     }
     return null
 }
 
 /**
- * Determines whether moving an order from one status to another is
- * allowed. Statuses must progress forward through the sequence
- * Received, Washing, Ready, Delivered and can never move backwards.
- *
- * @param {String} currentStatus The order's current status.
- * @param {String} newStatus The status the order would move to.
- * @returns {Boolean} True if the transition is allowed, false otherwise.
+ * Generate an auto-incremented order number.  This works by going through the order information
+ * in the JSON file and finding the largest number then adding 1.
+ * @returns The new order ID with the "O" prepended
  */
-function isStatusTransitionValid(currentStatus, newStatus) {
-    let statuses = ["Received", "Washing", "Ready", "Delivered"]
+async function getNextOrderId() {
+    let orders = await getOrders()
+    let maxId = 0
 
-    let currentPosition = -1
-    let newPosition = -1
-
-    for (let i = 0; i < statuses.length; i++) {
-
-        if (statuses[i] === currentStatus) {
-            currentPosition = i
-        }
-
-        if (statuses[i] === newStatus) {
-            newPosition = i
+    for (let ord of orders) {
+        let id = Number(ord.orderId.substring(1))
+        if (id > maxId) {
+            maxId = id
         }
     }
+    return 'O' + String(maxId + 1).padStart(3, '0')
+}
 
-    if (newPosition === -1) {
+/**
+ * Attempt to update the order status to a new status level following the ordering rules. 
+ * The newly updated state will be written to the file if the state change is allowed.
+ * 
+ * @param {*} order A JavaScript object representing the current state of the entire order
+ * @param {*} newStatus The new state that we would like to switch to.
+ * @returns true if the operation is successful, false otherwise
+ */
+async function updateOrderStatus(order, newStatus) {
+    let statusList = ['Received', 'Washing', 'Ready', 'Delivered']
+    let currentPos = statusList.indexOf(order.status)
+    let newPos = statusList.indexOf(newStatus)
+    if (newPos === -1 || newPos <= currentPos) {
         return false
     }
-
-    if (newPosition <= currentPosition) {
-        return false
+    let raw = await fs.readFile('orders.json')
+    let orderList = JSON.parse(raw)
+    for (let ord of orderList) {
+        if (ord.orderId == order.orderId) {
+            ord.status = newStatus
+            break
+        }
     }
-
+    let result = JSON.stringify(orderList, null, 4)
+    await fs.writeFile('orders_new.json', result)
     return true
 }
 
 /**
- * Asks the user for an order ID and updates the order status
- * if the new status is valid and allowed.
+ * Display a list of orders per customer in a structure way
+ * @returns nothing
  */
-async function updateOrderStatus() {
-
-    try {
-        let data = await fs.readFile("orders.json", "utf-8")
-        let orders = JSON.parse(data)
-
-        let orderId = prompt("Enter order ID: ")
-
-        let order = findOrderById(orders, orderId)
-
-        if (order === null) {
-            console.log("Order does not exist.")
-            return
-        }
-
-        console.log("Current status: " + order.status)
-
-        let newStatus = prompt("Enter new status: ")
-
-        if (isStatusTransitionValid(order.status, newStatus) === false) {
-            console.log("New status not accepted")
-            return
-        }
-
-        order.status = newStatus
-
-        let updatedData = JSON.stringify(orders, null, 4)
-
-        await fs.writeFile("orders.json", updatedData)
-
-        console.log("Order status updated")
-
-    } catch (error) {
-        console.log("Error updating order status.")
+async function showCustomerOrders() {
+    let customerId = prompt('Enter customer ID: ')
+    let customer = await getCustomerInformation(customerId)
+    if (!customer) {
+        console.log("**** customer not found")
+        return
+    }
+    console.log(`Orders for ${customer.name}`)
+    let orders = await getCustomerOrders(customerId)
+    console.log('Order ID  Order Date  Status      Total')
+    console.log('--------  ----------  ----------- -----')
+    for (let ord of orders) {
+        console.log(`${ord.order.padEnd(8)}  ${ord.date.padEnd(10)}  ${ord.status.padEnd(11)} ${ord.total.toFixed(2).padStart(5)}`)
     }
 }
 
 /**
- * Generates the next order ID based on the highest existing order
- * number, zero-padded to three digits.
- *
- * @param {Array} orders The list of existing orders.
- * @returns {String} The next order ID to use.
+ * Interact with the customer to create a new order then save it to the storage.
+ * @returns 
  */
-function generateNextOrderId(orders) {
-    let highestNumber = 0
-
-    for (let order of orders) {
-        let number = Number(order.orderId.substring(1))
-
-        if (number > highestNumber) {
-            highestNumber = number
-        }
+async function createNewOrder() {
+    let customerId = prompt('Enter customer ID: ')
+    let customer = await getCustomerInformation(customerId)
+    if (!customer) {
+        console.log('**** customer not found')
+        return
     }
 
-    let nextNumber = highestNumber + 1
-    let orderId = ""
-
-    if (nextNumber < 10) {
-        orderId = "O00" + nextNumber
-    }
-    else if (nextNumber < 100) {
-        orderId = "O0" + nextNumber
-    }
-    else {
-        orderId = "O" + nextNumber
-    }
-
-    return orderId
-}
-
-/**
- * Prompts the user to add one or more service items to an order,
- * validating each service ID and quantity entered.
- *
- * @param {Array} services The list of available services.
- * @returns {Object} An object containing the collected items array
- * and the running total price.
- */
-function collectOrderItems(services) {
     let items = []
     let total = 0
-
     while (true) {
-
-        let serviceId = prompt("Enter service ID (blank to finish): ")
-
-        if (serviceId === "") {
+        let serviceId = prompt('Enter service ID (blank to finish): ')
+        if (serviceId == '') {
             break
         }
 
-        let selectedService = findServiceById(services, serviceId)
-
-        if (selectedService === null) {
-            console.log("Service does not exist.")
+        let service = await getService(serviceId)
+        if (!service) {
+            console.log('**** service not found')
             continue
         }
 
-        let quantity = Number(prompt("Enter quantity: "))
+        let quantity = Number(prompt('Enter quantity: '))
+        items.push({
+            serviceId: serviceId,
+            quantity: quantity
+        })
 
-        if (quantity <= 0 || isNaN(quantity)) {
-            console.log("Invalid quantity.")
-            continue
-        }
-
-        items.push(
-            {
-                serviceId: serviceId,
-                quantity: quantity
-            }
-        )
-
-        total = total + (quantity * selectedService.price)
+        total += service.price * quantity
     }
 
-    return { items: items, total: total }
+    if (items.length == 0) {
+        console.log('**** order must contain at least one service')
+        return
+    }
+
+    let orderId = await getNextOrderId()
+
+    let today = new Date()
+    let orderDate = today.toISOString().substring(0, 10)
+
+    let order = {
+        orderId: orderId,
+        customerId: customerId,
+        orderDate: orderDate,
+        status: 'Received',
+        items: items
+    }
+
+    let orders = await getOrders()
+    orders.push(order)
+    await saveOrders(orders)
+
+    console.log(`Order ${orderId} created`)
+    console.log(`Total price: ${total.toFixed(2)} QAR`)
 }
 
 /**
- * Creates a new laundry order for an existing customer
- * and saves the new order to the orders JSON file.
+ * Interact with the customer to determine the current status of an order and update it with a 
+ * new status if allowed.
  */
-async function createNewOrder() {
-
-    try {
-        let customerData = await fs.readFile("customers.json", "utf-8")
-        let orderData = await fs.readFile("orders.json", "utf-8")
-        let serviceData = await fs.readFile("services.json", "utf-8")
-
-        let customers = JSON.parse(customerData)
-        let orders = JSON.parse(orderData)
-        let services = JSON.parse(serviceData)
-
-        let customerId = prompt("Enter customer ID: ")
-
-        if (findCustomerById(customers, customerId) === null) {
-            console.log("Customer does not exist.")
-            return
-        }
-
-        let orderId = generateNextOrderId(orders)
-
-        let today = new Date()
-        let orderDate = today.toISOString().split("T")[0]
-
-        let status = "Received"
-
-        let result = collectOrderItems(services)
-
-        if (result.items.length === 0) {
-            console.log("Order must contain at least one service.")
-            return
-        }
-
-        let newOrder = {
-            orderId: orderId,
-            customerId: customerId,
-            orderDate: orderDate,
-            status: status,
-            items: result.items
-        }
-
-        orders.push(newOrder)
-
-        let updatedData = JSON.stringify(orders, null, 4)
-
-        await fs.writeFile("orders.json", updatedData)
-
-        console.log()
-        console.log("Order " + orderId + " created")
-        console.log("Total price: " + result.total.toFixed(2) + " QAR")
-
-    } catch (error) {
-        console.log("Error creating order.")
-    }
-}
-
-let choice = ""
-
-while (choice !== "5") {
-
-    showMenu()
-
-    choice = prompt("What is your choice> ")
-
-    if (choice === "1") {
-        await showServices()
-    }
-    else if (choice === "2") {
-        await viewCustomerOrders()
-    }
-    else if (choice === "3") {
-        await updateOrderStatus()
-    }
-    else if (choice === "4") {
-        await createNewOrder()
-    }
-    else if (choice === "5") {
-        console.log("Goodbye!")
+async function changeOrderStatus() {
+    let oid = prompt('Enter order ID: ')
+    let details = await getOrderDetails(oid)
+    console.log(`Current status: ${details.status}`)
+    let newStatus = prompt('Enter new status: ')
+    let result = await updateOrderStatus(details, newStatus)
+    if (!result) {
+        console.log('New status not accepted')
     }
     else {
-        console.log("Invalid choice. Please enter a number from 1 to 5.")
+        console.log('Status updated')
     }
-
 }
+
+/**
+ * Display the menu to the user and wait for their input.  If the input is invalid the function
+ * displays a message and prompts again.  If the user enters a valid value then the function stops and
+ * returns the selection number.
+ * @returns A valid selection number.
+ */
+function showMenu() {
+    while (true) {
+        console.log('1. Show laundry services')
+        console.log('2. View customer orders')
+        console.log('3. Update order status')
+        console.log('4. Create new order')
+        console.log('5. Exit\n')
+        let selection = Number(prompt('What is your choice> '))
+        if (selection >= 1 && selection <= 5) {
+            return selection
+        }
+        console.log("*** Invalid input.. try again! ***")
+    }
+}
+
+
+while (true) {
+    let option = showMenu()
+    if (option === 1) {
+        await showLaundryServices()
+    }
+    else if (option === 2) {
+        await showCustomerOrders()
+    }
+    else if (option === 3) {
+        await changeOrderStatus()
+    }
+    else if (option === 4) {
+        await createNewOrder()
+    }
+    else {
+        break
+    }
+}
+console.log("Thank you")
