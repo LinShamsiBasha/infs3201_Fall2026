@@ -31,7 +31,7 @@ export async function getCustomer(customerId) {
  * @param {Object} order The order.
  * @returns {Object} The calculated pricing information.
  */
-export async function calculateOrderPrice(order) {
+export async function calculateUrderPrice(order) {
     let subtotal = 0
 
     for (let item of order.items) {
