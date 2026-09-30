@@ -1,4 +1,6 @@
 import promptSync from 'prompt-sync'
+import 'dotenv/config'
+
 
 import {
     getLaundryServices,

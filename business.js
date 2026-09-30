@@ -32,6 +32,10 @@ export async function getCustomer(customerId) {
  * @returns {Object} The calculated pricing information.
  */
 export async function calculateOrderPrice(order) {
+    let minimumOrderCharge = Number(process.env.MINIMUM_ORDER_CHARGE) || 0
+    let freeDeliveryThreshold = Number(process.env.FREE_DELIVERY_THRESHOLD) || 0
+    let deliveryChargeAmount = Number(process.env.DELIVERY_CHARGE) || 0
+
     let subtotal = 0
 
     for (let item of order.items) {
@@ -44,16 +48,16 @@ export async function calculateOrderPrice(order) {
 
     let adjustedServiceCharge = subtotal
 
-    if (subtotal < 25) {
-        adjustedServiceCharge = 25
+    if (subtotal < minimumOrderCharge) {
+        adjustedServiceCharge = minimumOrderCharge
     }
 
     let minimumAdjustment = adjustedServiceCharge - subtotal
 
     let deliveryCharge = 0
 
-    if (subtotal < 50) {
-        deliveryCharge = 10
+    if (subtotal < freeDeliveryThreshold) {
+        deliveryCharge = deliveryChargeAmount
     }
 
     let finalTotal = adjustedServiceCharge + deliveryCharge
