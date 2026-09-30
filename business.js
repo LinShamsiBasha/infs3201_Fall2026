@@ -31,7 +31,7 @@ export async function getCustomer(customerId) {
  * @param {Object} order The order.
  * @returns {Object} The calculated pricing information.
  */
-export async function calculateorderPrice(order) {
+export async function calculateOrderPrice(order) {
     let subtotal = 0
 
     for (let item of order.items) {
@@ -135,6 +135,71 @@ export async function getOrder(orderId) {
 export async function getServiceInformation(serviceId) {
     return await findService(serviceId)
 }
+
+
+/**
+ * Gets all information needed to display an invoice.
+ * @param {String} orderId The order ID.
+ * @returns {Object|null} The invoice information or null if not found.
+ */
+export async function getInvoice(orderId) {
+    let order = await findOrder(orderId)
+
+    if (order === null) {
+        return null
+    }
+
+    let customer = await findCustomer(order.customerId)
+
+    if (customer === null) {
+        return null
+    }
+
+    let invoiceItems = []
+
+    for (let item of order.items) {
+        let service = await findService(item.serviceId)
+
+        if (service === null) {
+            return null
+        }
+
+        let lineTotal = service.price * item.quantity
+
+        invoiceItems.push({
+            name: service.name,
+            quantity: item.quantity,
+            unitPrice: service.price,
+            lineTotal: lineTotal
+        })
+    }
+
+    let price = await calculateOrderPrice(order)
+
+    return {
+        orderId: order.orderId,
+        orderDate: order.orderDate,
+        status: order.status,
+        customerName: customer.name,
+        items: invoiceItems,
+        subtotal: price.subtotal,
+        minimumAdjustment: price.minimumAdjustment,
+        deliveryCharge: price.deliveryCharge,
+        finalTotal: price.finalTotal
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Creates a new order.

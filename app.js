@@ -7,7 +7,8 @@ import {
     getOrder,
     getServiceInformation,
     changeOrderStatus,
-    addNewOrder
+    addNewOrder,
+    getInvoice
 } from './business.js'
 
 const prompt = promptSync()
@@ -147,6 +148,54 @@ async function createNewOrder() {
     console.log(`Total price: ${result.total.toFixed(2)} QAR`)
 }
 
+
+
+
+
+/**
+ * Displays a detailed invoice for an order.
+ * @returns {void}
+ */
+async function viewInvoice() {
+    let orderId = prompt('Enter order ID: ')
+
+    let invoice = await getInvoice(orderId)
+
+    if (invoice === null) {
+        console.log('**** order, customer, or service not found')
+        return
+    }
+
+    console.log()
+    console.log(`Order ID: ${invoice.orderId}`)
+    console.log(`Order Date: ${invoice.orderDate}`)
+    console.log(`Status: ${invoice.status}`)
+    console.log(`Customer: ${invoice.customerName}`)
+    console.log()
+
+    console.log('Service                    Qty   Unit Price   Line Total')
+    console.log('-------------------------- ----- ------------ ----------')
+
+    for (let item of invoice.items) {
+        console.log(
+            `${item.name.padEnd(26)} ` +
+            `${String(item.quantity).padStart(5)} ` +
+            `${item.unitPrice.toFixed(2).padStart(12)} ` +
+            `${item.lineTotal.toFixed(2).padStart(10)}`
+        )
+    }
+
+    console.log()
+    console.log(`Subtotal: ${invoice.subtotal.toFixed(2)} QAR`)
+    console.log(`Minimum charge adjustment: ${invoice.minimumAdjustment.toFixed(2)} QAR`)
+    console.log(`Delivery charge: ${invoice.deliveryCharge.toFixed(2)} QAR`)
+    console.log(`Final total: ${invoice.finalTotal.toFixed(2)} QAR`)
+    console.log()
+} 
+
+
+
+
 /**
  * Displays the menu and gets a valid selection.
  * @returns {Number} The selected menu option.
@@ -157,18 +206,20 @@ function showMenu() {
         console.log('2. View customer orders')
         console.log('3. Update order status')
         console.log('4. Create new order')
-        console.log('5. Exit')
-        console.log()
+        console.log('5. View invoice')
+        console.log('6. Exit')
 
         let selection = Number(prompt('What is your choice> '))
 
-        if (selection >= 1 && selection <= 5) {
+        if (selection >= 1 && selection <= 6) {
             return selection
         }
 
         console.log('*** Invalid input.. try again! ***')
     }
 }
+
+
 
 while (true) {
     let option = showMenu()
@@ -185,6 +236,11 @@ while (true) {
     else if (option === 4) {
         await createNewOrder()
     }
+
+    else if (option === 5) {
+        await viewInvoice()
+    }
+
     else {
         break
     }
